@@ -101,7 +101,19 @@
 
   var rafIds = {};
   var nextRafId = 1;
-
+  
+  var needCheck = true;
+  
+  window.addEventListener('resize', setNeedCheck);
+  document.addEventListener('scroll', setNeedCheck);
+  function setNeedCheck() {
+    needCheck = true
+    requestAnimationFrame(unsetNeedCheck)
+  };
+  function unsetNeedCheck() {
+    needCheck = false
+  };
+  
   // Replace requestAnimationFrame.
   window.requestAnimationFrame = (function(oldRAF) {
     return function(callback, element) {
@@ -109,13 +121,14 @@
 
       var handler = function() {
         delete rafIds[rafId];
+        // if (!needCheck || isOnScreen(element)) {
         if (isOnScreen(element)) {
           callback.call(null, arguments);
         } else {
           rafIds[rafId] = oldRAF(handler, element);
         }
       };
-      ravIds[rafId] = oldRAF(handler, element);
+      rafIds[rafId] = oldRAF(handler, element);
       return rafId;
     };
 

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lots of RAF iframes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    
+    .element {
+      position: relative;
+      width: 400px;
+      height: 300px;
+      margin: 2em;
+      border: 1px solid black;
+      display: block;
+    }
+
+    #stats { position: absolute; top:0; left: 0; z-index: 10; }
+  </style>
+</head>
+<body>
+<h1>A typical page using WebGL to diagram live examples</h1>
+<p>
+Likely the elements (with canvas inside) in this page run slower than 60fps.
+</p><p>
+This is because the browser does not check if the elemnents needing
+a RAF event are actually on the screen
+</p><p>
+This makes it so using WebGL to explain things (for example a page
+about Physics) with lots of WebGL based diagrams problematic.
+</p><p>
+Hopefully browsers will fix this issue.
+</p><p>
+<a href="lots-of-elements-polyfill.html">Compare to the wrapped version</a>.
+</p>
+
+<script src="three.min.js"></script>
+<script src="stats.min.js"></script>
+
+<script>
+var numElements = 12;
+for (var ii = 0; ii < numElements; ++ii) {
+  var div = document.createElement("h1");
+  div.innerHTML = "Example: " + (ii + 1);
+  document.body.appendChild(div);
+  var iframe = document.createElement("iframe");
+  iframe.src = "webgl_lots_o_objects.html";
+  document.body.appendChild(createElement());
+  for (var jj = 0; jj < 24; ++jj) {
+    var div = document.createElement("div");
+    div.appendChild(document.createTextNode(jj.toString() + ": more below"));
+    document.body.appendChild(div);
+  }
+}
+
+function createElement() {
+
+  var container, stats;
+  
+  var camera, scene, renderer;
+  
+  var mesh, group1, group2, group3, light;
+  
+  var clock = 0;
+  
+  init();
+  animate();
+  
+  return container;
+  
+  function init() {
+  
+    container = document.createElement('div');
+    container.className = 'element';
+    camera = new THREE.PerspectiveCamera( 20, 1, 1, 10000 );
+    camera.position.z = 1800;
+  
+    scene = new THREE.Scene();
+  
+    light = new THREE.DirectionalLight( 0xffffff );
+    light.position.set( 0, 0, 1 ).normalize();
+    scene.add( light );
+  
+    light = new THREE.DirectionalLight( 0xffffff );
+    light.position.set( 0, 0, -1 ).normalize();
+    scene.add( light );
+  
+    var sphere = new THREE.SphereGeometry( 50, 32, 16 );
+  
+    var num = 3;
+    var spread = 200;
+    for (var zz = -num; zz <= num; ++zz) {
+      for (var yy = -num; yy <= num; ++yy) {
+        for (var xx = -num; xx <= num; ++xx) {
+          var color =
+            ((((zz + num) * 255 / num * 2) | 0) << 16) |
+            ((((yy + num) * 255 / num * 2) | 0) <<  8) |
+            ((((xx + num) * 255 / num * 2) | 0) <<  0) ;
+          var material = new THREE.MeshLambertMaterial( { color: color, shading: THREE.FlatShading } )
+  
+          group1 = new THREE.Mesh( sphere, material );
+          group1.position.x = xx * spread;
+          group1.position.y = yy * spread;
+          group1.position.z = zz * spread;
+          scene.add( group1 );
+        }
+      }
+    }
+  
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    container.appendChild( renderer.domElement );
+    requestAnimationFrame(function(){
+      renderer.setSize( container.clientWidth, container.clientHeight, false );
+    })
+  
+    stats = new Stats();
+    container.appendChild( stats.domElement );
+  
+  
+  }
+  
+  //
+  
+  function animate() {
+  
+    render();
+  
+    stats.update();
+    requestAnimationFrame( animate );
+  
+  };
+  
+  function render() {
+  
+    clock += 0.01;
+  
+    camera.aspect = renderer.context.canvas.clientWidth / renderer.context.canvas.clientHeight;
+    camera.updateProjectionMatrix();
+  
+    camera.position.x = Math.cos(clock) * 1800;
+    camera.position.z = Math.sin(clock) * 1800;
+  
+    camera.lookAt( scene.position );
+  
+    renderer.render( scene, camera );
+  
+  }
+  
+}
+
+</script>
+</body>
+</html>
